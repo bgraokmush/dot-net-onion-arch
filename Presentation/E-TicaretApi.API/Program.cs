@@ -2,11 +2,19 @@ using ETicaretApi.Persistance;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-
 
 builder.Services.AddPersistanceService();
+builder.Services.AddCors(opt =>
+{
+    opt.AddDefaultPolicy(policy =>
+    {
+        policy
+        .WithOrigins("http://localhost:4200/", "https://localhost:4200/")
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -20,6 +28,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors();
 
 app.UseHttpsRedirection();
 
