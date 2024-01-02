@@ -1,6 +1,9 @@
 ﻿using ETicaretApi.Application.Repositories.ProductRepositories;
+using ETicaretApi.Application.ViewModels.Product;
+using ETicaretApi.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace E_TicaretApi.API.Controllers
 {
@@ -17,42 +20,54 @@ namespace E_TicaretApi.API.Controllers
             _productWriteRepository = productWriteRepository;
         }
 
-        [HttpGet("get")]
-        public IActionResult GetAll()
+        [HttpGet]
+        public async Task<IActionResult> Get()
         {
-            return Ok(_productReadRepository.GetAll());
+            return Ok(_productReadRepository.GetAll(false));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Test()
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(string id)
         {
-            await _productWriteRepository.AddRangeAsync(new()
+            return Ok(await _productReadRepository.GetByIdAsync(id, false));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] VM_Create_Product productModel)
+        {
+            await _productWriteRepository.AddAsync(new()
             {
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Product 1",
-                    Price = 100,
-                    Stock = 100
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Product 2",
-                    Price = 200,
-                    Stock = 200
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Product 3",
-                    Price = 300,
-                    Stock = 300
-                },
+                Name = productModel.Name,
+                Price = productModel.Price,
+                Stock = productModel.Stock
             });
             await _productWriteRepository.SaveAsync();
+            return StatusCode((int)HttpStatusCode.Created);
+        }
 
-            return Ok(_productReadRepository.GetAll());
+        [HttpPut]
+        public async Task<IActionResult> Put(VM_Update_Product productModel)
+        {
+            var product = await _productReadRepository.GetByIdAsync(productModel.Id);
+            product.Name = productModel.Name;
+            product.Price = productModel.Price;
+            product.Stock = productModel.Stock;
+            await _productWriteRepository.SaveAsync();
+
+            return StatusCode((int)HttpStatusCode.OK);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var isSucces =  await _productWriteRepository.Remove(id);
+            
+            if (!isSucces)
+                return StatusCode((int)HttpStatusCode.NotFound);
+
+            await _productWriteRepository.SaveAsync();
+            return StatusCode((int)HttpStatusCode.OK);
         }
     }
 }
