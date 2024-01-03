@@ -36,6 +36,7 @@ namespace E_TicaretApi.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] VM_Create_Product productModel)
         {
+
             await _productWriteRepository.AddAsync(new()
             {
                 Name = productModel.Name,
