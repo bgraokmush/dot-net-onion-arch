@@ -1,5 +1,9 @@
-﻿using ETicaretApi.Application.Repositories.ProductRepositories;
+﻿using ETicaretApi.Application.Repositories.FileRepositories;
+using ETicaretApi.Application.Repositories.InvoceFileRepositories;
+using ETicaretApi.Application.Repositories.ProductImageFileRepositories;
+using ETicaretApi.Application.Repositories.ProductRepositories;
 using ETicaretApi.Application.RequestParameters;
+using ETicaretApi.Application.Services;
 using ETicaretApi.Application.ViewModels.Product;
 using ETicaretApi.Domain.Entities;
 using Microsoft.AspNetCore.Http;
@@ -14,15 +18,31 @@ namespace E_TicaretApi.API.Controllers
     {
         private readonly IProductReadRepository _productReadRepository;
         private readonly IProductWriteRepository _productWriteRepository;
+        private readonly IFileService _fileService;
+        private readonly IFileWriteRepository _fileWriteRepository;
+        private readonly IFileReadRepository _fileReadRepository;
 
-        public ProductController(IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository)
+        private readonly IProductImageFileReadRepository _productImageFileReadRepository;
+        private readonly IProductImageFileWriteRepository _productImageFileWriteRepository;
+
+        private readonly IInvoceFileReadRepository _invoceFileReadRepository;
+        private readonly IInvoceFileWriteRepository _invoceFileWriteRepository;
+
+        public ProductController(IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository, IFileService fileService, IFileWriteRepository fileWriteRepository, IFileReadRepository fileReadRepository, IProductImageFileReadRepository productImageFileReadRepository, IProductImageFileWriteRepository productImageFileWriteRepository, IInvoceFileReadRepository invoceFileReadRepository, IInvoceFileWriteRepository invoceFileWriteRepository)
         {
             _productReadRepository = productReadRepository;
             _productWriteRepository = productWriteRepository;
+            _fileService = fileService;
+            _fileWriteRepository = fileWriteRepository;
+            _fileReadRepository = fileReadRepository;
+            _productImageFileReadRepository = productImageFileReadRepository;
+            _productImageFileWriteRepository = productImageFileWriteRepository;
+            _invoceFileReadRepository = invoceFileReadRepository;
+            _invoceFileWriteRepository = invoceFileWriteRepository;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]Pagination pagination)
+        public async Task<IActionResult> Get([FromQuery] Pagination pagination)
         {
             var totalCount = _productReadRepository.GetAll(false).Count();
             var products = _productReadRepository.GetAll(false).Skip(pagination.Page * pagination.Size).Take(pagination.Size).Select(
@@ -64,6 +84,22 @@ namespace E_TicaretApi.API.Controllers
             return StatusCode((int)HttpStatusCode.Created);
         }
 
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Upload()
+        {
+            var datas = await _fileService.UploadAsync("resource\\product-images", Request.Form.Files);
+            await _productImageFileWriteRepository
+                .AddRangeAsync(
+                    datas.Select(d => new ProductImageFile()
+                    {
+                        FileName = d.fileName,
+                        Path = d.path
+                    }
+                 ).ToList());
+            await _productImageFileWriteRepository.SaveAsync();
+            return Ok();
+        }
+
         [HttpPut]
         public async Task<IActionResult> Put(VM_Update_Product productModel)
         {
@@ -79,13 +115,13 @@ namespace E_TicaretApi.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
-            var isSucces =  await _productWriteRepository.Remove(id);
-            
+            var isSucces = await _productWriteRepository.Remove(id);
+
             if (!isSucces)
                 return StatusCode((int)HttpStatusCode.NotFound);
 
             await _productWriteRepository.SaveAsync();
-            return StatusCode((int)HttpStatusCode.OK);
+            return Ok();
         }
     }
 }

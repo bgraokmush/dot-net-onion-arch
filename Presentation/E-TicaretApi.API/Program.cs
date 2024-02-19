@@ -1,4 +1,5 @@
 using ETicaretApi.Application.Validators.Products;
+using ETicaretApi.Infrastructure;
 using ETicaretApi.Infrastructure.Filters;
 using ETicaretApi.Persistance;
 using FluentValidation.AspNetCore;
@@ -7,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddPersistanceService();
+builder.Services.AddInfrastructureServices();
+
 builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(policy =>
@@ -32,6 +35,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseStaticFiles();
 
 app.UseCors();
 
