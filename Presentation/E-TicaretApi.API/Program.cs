@@ -1,6 +1,7 @@
 using ETicaretApi.Application.Validators.Products;
 using ETicaretApi.Infrastructure;
 using ETicaretApi.Infrastructure.Filters;
+using ETicaretApi.Infrastructure.Services.Storage.Local;
 using ETicaretApi.Persistance;
 using FluentValidation.AspNetCore;
 
@@ -9,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddPersistanceService();
 builder.Services.AddInfrastructureServices();
-
+builder.Services.AddStorage<LocalStorage>();
 builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(policy =>
